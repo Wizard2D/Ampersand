@@ -1,7 +1,9 @@
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <limine.h>
+#include <kernel.h>
+#include <libc/string.h>
+#include <libc/stdio.h>
+#include <font8.h>
+#include <graphics/text_draw.h>
+#include <gdt/gdt.h>
 
 // Set the base revision to 2, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -98,6 +100,8 @@ static void hcf(void) {
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.
+
+struct limine_framebuffer *framebuffer;
 void _start(void) {
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {
@@ -111,14 +115,20 @@ void _start(void) {
     }
 
     // Fetch the first framebuffer.
-    struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+    framebuffer = framebuffer_request.response->framebuffers[0];
 
-    // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-    for (size_t i = 0; i < 100; i++) {
-        volatile uint32_t *fb_ptr = framebuffer->address;
-        fb_ptr[i * (framebuffer->pitch / 4) + i] = 0xffffff;
-    }
+    
 
-    // We're done, just hang...
+    uint32_t twidth = 0, theight = 0;
+    calc_text_size("WELCOME TO AMPERSAND\n", 3, &twidth, &theight);
+
+    draw_str((volatile uint32_t*)framebuffer->address, framebuffer->pitch, font8, framebuffer->width/2-twidth/2, 25, "WELCOME TO AMPERSAND\n", create_color(255,0,0), 3);
+    last_finish_x = 0;
+
+    load_gdt();
+
+    printf("This is a test of printf.");
+    printf("This is written consecutively because I am very smart");
+    // We're done, just hang... 
     hcf();
 }

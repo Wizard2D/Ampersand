@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "stdint.h": "c",
+        "stdio.h": "c",
+        "stddef.h": "c",
+        "text_draw.h": "c",
+        "font8.h": "c",
+        "stdbool.h": "c",
+        "gdt.h": "c"
+    }
+}
