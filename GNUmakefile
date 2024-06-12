@@ -25,7 +25,7 @@ run: $(IMAGE_NAME).iso
 
 .PHONY: run-ex
 run-ex: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -M q35 -s -m 2G -d int -cdrom $(IMAGE_NAME).iso -boot d
+	qemu-system-x86_64 -M q35 -s -m 2G -d int -no-reboot -no-shutdown -cdrom $(IMAGE_NAME).iso -boot d
 
 .PHONY: run-uefi
 run-uefi: ovmf $(IMAGE_NAME).iso

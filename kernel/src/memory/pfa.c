@@ -6,9 +6,14 @@ static uint64_t start_address = 0;
 
 uint64_t pfbmp[PAGE_FRAME_NUM / (sizeof(uint64_t) * 8)]; 
 
+extern struct limine_framebuffer *framebuffer;
+extern struct limine_memmap_request memmap;
+
+extern uint64_t get_largest_base();
+
 void pfbmp_init()
 {
-    start_address = (uint64_t)(&endkernel) - 0xFFFFFFFF80000000 + hhdm->offset;
+    start_address = get_largest_base() + hhdm->offset;//(uint64_t)(&endkernel) - 0xFFFFFFFF80000000 + hhdm->offset;
 
     for(uint64_t i = 0; i < PAGE_FRAME_NUM / (sizeof(uint64_t) * 8); i++)
     {
@@ -26,7 +31,7 @@ static pageframe_t kalloc_frame_int()
         if(i == PAGE_FRAME_NUM)
         {
             printf("No available page frames.\n");
-            return -1; // replace with a kernel panic ASAP.
+            return 0; // replace with a kernel panic ASAP.
         }
     }
     pfbmp[i] = PF_USED;
