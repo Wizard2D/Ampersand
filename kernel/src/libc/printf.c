@@ -32,8 +32,17 @@ void putd(int x)
 
 void puts(const char* str)
 {
-    draw_str((volatile uint32_t *)framebuffer->address, framebuffer->pitch, font8, last_finish_x+10, 40, str, 0xFFFFFFFF, 2);
+    if(TerminalMode == false)
+        draw_str((volatile uint32_t *)framebuffer->address, framebuffer->pitch, font8, last_finish_x+10, 40, str, 0xFFFFFFFF, 2);
+    else
+        kwrite(str);
 }
+
+void pbuf()
+{
+    puts(buffer);
+}
+
 
 int printf(const char* fmt, ...)
 {
@@ -87,6 +96,7 @@ int printf(const char* fmt, ...)
             putch(fmt[i]);
         }
     }
+    putch('\0');
     puts(buffer);
     flush();
     va_end(list);

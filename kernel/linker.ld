@@ -24,20 +24,25 @@ SECTIONS
     . = 0xffffffff80000000;
 
     .text : {
+        text_start = .;
         *(.text .text.*)
+        text_end = .;
     } :text
 
     /* Move to the next memory page for .rodata */
     . = ALIGN(CONSTANT(MAXPAGESIZE));
 
     .rodata : {
+        rodata_start = .;
         *(.rodata .rodata.*)
+        rodata_end = .;
     } :rodata
 
     /* Move to the next memory page for .data */
     . = ALIGN(CONSTANT(MAXPAGESIZE));
 
     .data : {
+        data_start = .;
         *(.data .data.*)
 
         /* Place the sections that contain the Limine requests as part of the .data */
@@ -45,6 +50,7 @@ SECTIONS
         KEEP(*(.requests_start_marker))
         KEEP(*(.requests))
         KEEP(*(.requests_end_marker))
+        data_end = .;
     } :data
 
     /* Dynamic section for relocations, both in its own PHDR and inside data PHDR */
@@ -57,8 +63,11 @@ SECTIONS
     /* If you need, for example, .init_array and .fini_array, those should be placed */
     /* above this. */
     .bss : {
+        sbss = .;
         *(.bss .bss.*)
         *(COMMON)
+        ebss = .;
+	    endkernel = .;
     } :data
 
     /* Discard .note.* and .eh_frame* since they may cause issues on some hosts. */

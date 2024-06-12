@@ -6,6 +6,9 @@
         "text_draw.h": "c",
         "font8.h": "c",
         "stdbool.h": "c",
-        "gdt.h": "c"
+        "gdt.h": "c",
+        "timer.h": "c",
+        "pfa.h": "c",
+        "virtmem.h": "c"
     }
 }

@@ -61,5 +61,4 @@ void load_gdt()
 	gpointer.addr = (uint64_t)(uintptr_t)gentries;
 	gpointer.size = sizeof(gentries) - 1;
 	gdt_install();
-	printf("GDT Installation Complete\n");
 }

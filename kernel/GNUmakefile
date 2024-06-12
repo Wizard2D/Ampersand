@@ -52,6 +52,7 @@ override KCFLAGS += \
     -fno-lto \
     -fPIE \
     -m64 \
+    -g \
     -march=x86-64 \
     -mno-80387 \
     -mno-mmx \

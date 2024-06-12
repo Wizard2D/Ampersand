@@ -4,6 +4,11 @@
 #include <font8.h>
 #include <graphics/text_draw.h>
 #include <gdt/gdt.h>
+#include <idt/idt.h>
+#include <memory/pfa.h>
+#include <memory/virtmem.h>
+#include <flanterm/flanterm.h>
+#include <flanterm/backends/fb.h>
 
 // Set the base revision to 2, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -20,6 +25,24 @@ static volatile LIMINE_BASE_REVISION(2);
 __attribute__((used, section(".requests")))
 static volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
+    .revision = 0
+};
+
+__attribute__((used, section(".requests")))
+static volatile struct limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST,
+    .revision = 0
+};
+
+__attribute__((used, section(".requests")))
+struct limine_kernel_address_request kernaddress_req = {
+    .id = LIMINE_KERNEL_ADDRESS_REQUEST,
+    .revision = 0
+};
+
+__attribute__((used, section(".requests")))
+struct limine_memmap_request memmap = {
+    .id = LIMINE_MEMMAP_REQUEST,
     .revision = 0
 };
 
@@ -102,33 +125,80 @@ static void hcf(void) {
 // linker script accordingly.
 
 struct limine_framebuffer *framebuffer;
+struct limine_hhdm_response *hhdm;
+struct flanterm_context *ft_ctx;
+
+void kwrite(const char* str)
+{
+    flanterm_write(ft_ctx, str, strlen(str));
+}
+
+bool TerminalMode = true;
+
+void test_hhdm(void *hhdm) {
+  return;
+}
+
 void _start(void) {
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {
         hcf();
     }
 
-    // Ensure we got a framebuffer.
+    load_gdt();
+ 
+    hhdm = hhdm_request.response;
+    
+    test_hhdm(hhdm->offset);
+
+        // Ensure we got a framebuffer.
     if (framebuffer_request.response == NULL
-     || framebuffer_request.response->framebuffer_count < 1) {
+    || framebuffer_request.response->framebuffer_count < 1) {
         hcf();
     }
 
     // Fetch the first framebuffer.
     framebuffer = framebuffer_request.response->framebuffers[0];
 
-    
+    if(TerminalMode == false)
+    {
+        uint32_t twidth = 0, theight = 0;
+        calc_text_size("WELCOME TO AMPERSAND\n", 3, &twidth, &theight);
 
-    uint32_t twidth = 0, theight = 0;
-    calc_text_size("WELCOME TO AMPERSAND\n", 3, &twidth, &theight);
+        draw_str((volatile uint32_t*)framebuffer->address, framebuffer->pitch, font8, framebuffer->width/2-twidth/2, 25, "WELCOME TO AMPERSAND\n", create_color(255,0,0), 3);
+        last_finish_x = 0;
 
-    draw_str((volatile uint32_t*)framebuffer->address, framebuffer->pitch, font8, framebuffer->width/2-twidth/2, 25, "WELCOME TO AMPERSAND\n", create_color(255,0,0), 3);
-    last_finish_x = 0;
+        printf("This is a test of printf.");
+        printf("This is written consecutively because I am very smart");
+    }
+    else
+    {
+        ft_ctx = flanterm_fb_init(
+            NULL,
+            NULL,
+            (volatile uint32_t*)framebuffer->address, framebuffer->width, framebuffer->height, framebuffer->pitch,
+            framebuffer->red_mask_size, framebuffer->red_mask_shift,
+            framebuffer->green_mask_size, framebuffer->green_mask_shift,
+            framebuffer->blue_mask_size, framebuffer->blue_mask_shift,
+            NULL,
+            NULL, NULL,
+            NULL, NULL,
+            NULL, NULL,
+            NULL, 0, 0, 1,
+            0, 0,
+            0
+        );
 
-    load_gdt();
-
-    printf("This is a test of printf.");
-    printf("This is written consecutively because I am very smart");
+        printf("Welcome to Ampersand: Terminal Mode. Version 1.0-dev\n");
+        printf("starting...\n");
+        printf("intitializing paging...\n");
+        printf("hhdm: %x", hhdm->offset);
+        pfbmp_init();
+        idt_init();
+        printf("PFA done.\n");
+        pgsetup();
+        printf("paging enabled");
+    }
     // We're done, just hang... 
     hcf();
 }
