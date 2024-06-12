@@ -98,9 +98,10 @@ uint64_t get_largest_base()
 void map_hhdm()
 {
     uint64_t base = hhdm_offset;
-    uint64_t high = get_largest_base;
+    uint64_t high = get_largest_base();
 
     printf("mapping hhdm memory\n");
+    hhdmm = true;
     for (uint64_t i = 0; i < high; i += PAGE_SIZE) {
         map(base + i, i, PAGE_PRESENT | PAGE_RW );
     }
@@ -146,7 +147,6 @@ static void flush_tlb() {
     asm volatile("mov %cr3, %rax; mov %rax, %cr3");
 }
 
-
 void map(uint64_t vaddr, uint64_t paddr, uint64_t flags)
 {
     uint16_t pml4_index = (vaddr >> 39) & 0x1FF;
@@ -180,9 +180,6 @@ void map(uint64_t vaddr, uint64_t paddr, uint64_t flags)
 
     uint64_t perm_mod = pml1[pml1_index] & PAGE_PRESENT;
     pml1[pml1_index] = paddr | flags;
-
-    if(hhdmm)
-        printf("mapping %x to %x\n", vaddr, paddr);
 
     if (perm_mod) {
         flush_tlb();
