@@ -157,10 +157,10 @@ void _start(void) {
         hcf();
     }
 
-    // Fetch the first framebuffer.
+    // Fetch the first framebuffer. 
     framebuffer = framebuffer_request.response->framebuffers[0];
 
-    if(TerminalMode == false)
+    if(TerminalMode == false) // note: do not turn off terminal mode
     {
         uint32_t twidth = 0, theight = 0;
         calc_text_size("WELCOME TO AMPERSAND\n", 3, &twidth, &theight);

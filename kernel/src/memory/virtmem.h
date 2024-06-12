@@ -28,6 +28,7 @@
 
 void pgsetup();
 void load_pdpt();
+void map(uint64_t vaddr, uint64_t paddr, uint64_t flags);
 extern void enable_pae();
 extern void enable_paging();
 

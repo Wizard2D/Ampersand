@@ -80,7 +80,7 @@ int printf(const char* fmt, ...)
                 }
                 case 'x':
                 {
-                    int hex = va_arg(list, int);
+                    uint64_t hex = va_arg(list, uint64_t);
                     print_hex(hex);
                     break;   
                 }

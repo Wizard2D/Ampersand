@@ -17,12 +17,14 @@ extern uint64_t ebss;
 extern uint64_t endkernel;
 
 static uint64_t *page_dir_ptr_tab;
+static uint64_t hhdm_offset = 0;
+
 
 bool hhdmm = false;
 
-#define phys_to_virt(addr) ((void *)((addr) + hhdm->offset))
+#define phys_to_virt(addr) ((void *)((addr) + hhdm_offset))
 
-#define virt_to_phys(addr) ((uint64_t)(addr) - hhdm->offset)
+#define virt_to_phys(addr) ((uint64_t)(addr) - hhdm_offset)
 
 #define pte_getaddr(pte) ((pte) & PAGE_FRAME)
 
@@ -80,10 +82,8 @@ void map_btldr()
     }
 }
 
-
-void map_hhdm()
+uint64_t get_largest_base()
 {
-    uint64_t base = hhdm->offset;
     uint64_t high = 0;
     for (uint8_t i=0; i<memmap.response->entry_count; i++) {
         struct limine_memmap_entry *entry = memmap.response->entries[i];
@@ -92,6 +92,14 @@ void map_hhdm()
             if(this_high > high) high = this_high;
         }
     }
+    return high;
+}
+
+void map_hhdm()
+{
+    uint64_t base = hhdm_offset;
+    uint64_t high = get_largest_base;
+
     printf("mapping hhdm memory\n");
     for (uint64_t i = 0; i < high; i += PAGE_SIZE) {
         map(base + i, i, PAGE_PRESENT | PAGE_RW );
@@ -123,7 +131,9 @@ extern void *memset(void *s, int c, size_t n);
 
 void pgsetup()
 {
+    hhdm_offset = hhdm->offset;
     page_dir_ptr_tab = (uint64_t *)kalloc_frame();
+    memset(page_dir_ptr_tab, 0, 512);
     map_btldr();
     map_fdmem();
     map_hhdm();
@@ -182,7 +192,7 @@ void map(uint64_t vaddr, uint64_t paddr, uint64_t flags)
 void load_pdpt()
 {
     printf("\nabt to load pdpt\n");
-    printf("PDPT: Virtual %x, Physical %x, HHDM: %x", (uint64_t)&page_dir_ptr_tab, virt_to_phys((uint64_t)&page_dir_ptr_tab), hhdm->offset);
-    asm volatile ("mov %0, %%cr3" :: "r" ((uint64_t)&page_dir_ptr_tab));
+    printf("PDPT: Virtual %x, Physical %x, HHDM: %x", (uint64_t)&page_dir_ptr_tab, virt_to_phys((uint64_t)&page_dir_ptr_tab), hhdm_offset);
+    asm volatile ("mov %0, %%cr3" :: "r" virt_to_phys(((uint64_t)&page_dir_ptr_tab)));
     printf("loaded pdpt\n");
 }
